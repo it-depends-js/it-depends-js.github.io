@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="it-depends : Lightweight dependency tracking library for JavaScript">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>it-depends</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/gerich-home/it-depends">View on GitHub</a>
+
+          <h1 id="project_title">it-depends</h1>
+          <h2 id="project_tagline">Lightweight dependency tracking library for JavaScript</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/gerich-home/it-depends/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/gerich-home/it-depends/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><a href="https://ci.appveyor.com/project/gerich-home/it-depends/branch/master"><img src="https://ci.appveyor.com/api/projects/status/dufdv2sefowej3mq/branch/master?svg=true" alt="Build status"></a>
+<a href="https://coveralls.io/github/gerich-home/it-depends?branch=master"><img src="https://coveralls.io/repos/github/gerich-home/it-depends/badge.svg?branch=master" alt="Coverage Status"></a>
+<a href="https://badge.fury.io/js/it-depends"><img src="https://badge.fury.io/js/it-depends.svg" alt="npm version"></a>
+<a href="https://david-dm.org/gerich-home/it-depends"><img src="https://david-dm.org/gerich-home/it-depends.svg" alt="Dependency Status"></a>
+<a href="https://david-dm.org/gerich-home/it-depends#info=devDependencies"><img src="https://david-dm.org/gerich-home/it-depends/dev-status.svg" alt="devDependency Status"></a>
+<a href="https://codeclimate.com/github/gerich-home/it-depends"><img src="https://codeclimate.com/github/gerich-home/it-depends/badges/gpa.svg" alt="Code Climate"></a></p>
+
+<h1>
+<a id="it-depends" class="anchor" href="#it-depends" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>it-depends</h1>
+
+<p>Lightweight dependency tracking / caching library for JavaScript</p>
+
+<h2>
+<a id="about-the-library" class="anchor" href="#about-the-library" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>About the library</h2>
+
+<p><strong>it-depends</strong> library is the attempt to create a lightweight dependency tracking library that helps you organize your JavaScript code using the approach to build a model proposed in <a href="http://knockoutjs.com/documentation/computedObservables.html">KnockoutJS</a></p>
+
+<p><strong>it-depends</strong> does not worry about UI - it is solely for managing dependencies between data/model elements.</p>
+
+<p>The key point in using the library is to define as less <strong>state values</strong> as possible and define the rest of the model as <strong>computed values</strong>, based on them.</p>
+
+<p>All computed values are <strong>lazy</strong> and <strong>cacheable</strong>. It means that if you define the computed value based on other values it is not calculated immediately.</p>
+
+<p>The calculation function <strong>will be called</strong> on the <strong>first</strong> attempt to read the value.</p>
+
+<p>The calculation function <strong>will not be called</strong> immediately after the value of any dependency is changed.
+You <strong>must read</strong> the value again to trigger the execution of calculation function.</p>
+
+<h2>
+<a id="when-to-use" class="anchor" href="#when-to-use" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>When to use?</h2>
+
+<p>Your code has quite a little state and a lot of values that can be computed from this state.</p>
+
+<p>Your aim is to have easy to test, debug and maintain self-describing pieces of code <strong>without side effects</strong>.
+You are OK with building code that way (it looks similar to <a href="https://en.wikipedia.org/wiki/Functional_programming">Functional Programming</a>).</p>
+
+<p>You have some state that should be calculated on demand only and you do not want to clutter your code with additional caching logic.</p>
+
+<p>You use a framework that is responsible for rendering the model on the screen.</p>
+
+<p>Limitation(<strong>to be removed</strong>): the framework is built in Angular way - it makes decisions when it is better to query data from the model by itself and <strong>does not require</strong> you to notify that some value has changed (see #3, #5 - when they will be implemented, the limitation will be removed)</p>
+
+<h2>
+<a id="history" class="anchor" href="#history" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>History</h2>
+
+<p>I created the library when I was refactoring one of complex screens in an <a href="https://angularjs.org/">AngularJS</a> application.</p>
+
+<p>The corresponding UI code contained logic to handle the checked/unchecked state of checkboxes mixed with the quite complex business rules for calculating whether the checkbox is enabled or disabled (based on the checked/unchecked state).</p>
+
+<p>The code was slow because for any (even unrelated to checkboxes) change on UI Angular restarted <code>$digest</code> loop and required the checked and enabled states.
+I preferred to do not use <code>$scope.$watch</code> to update values on change in checked/unchecked state, because I did not want to clutter my scope with implementation details of intermediate values, I wanted to always have some exact state (without intermediate transition states, when some values were updated and some of them - not) and I did not want to manage dependencies manually.</p>
+
+<p>I refactored code to extract these calculation functions into small pieces, implicitly declared dependencies between them, so the framework became able to handle both dependencies and caching for me.</p>
+
+<p>After that I allowed AngularJS to query my <code>$scope</code> so that it could get actual values from observable values and cached computed. </p>
+
+<h2>
+<a id="installation-and-usage" class="anchor" href="#installation-and-usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation and usage</h2>
+
+<h4>
+<a id="nodejs" class="anchor" href="#nodejs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><a href="https://nodejs.org/">NodeJS</a>
+</h4>
+
+<pre><code>npm install it-depends
+</code></pre>
+
+<p>In your application include the module and use it:</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> itDepends <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>it-depends<span class="pl-pds">'</span></span>);
+
+<span class="pl-c">// your code goes here:</span>
+<span class="pl-k">var</span> firstName <span class="pl-k">=</span> <span class="pl-smi">itDepends</span>.<span class="pl-c1">value</span>(<span class="pl-s"><span class="pl-pds">'</span>James<span class="pl-pds">'</span></span>);
+<span class="pl-k">...</span></pre></div>
+
+<h4>
+<a id="amdrequirejs" class="anchor" href="#amdrequirejs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><a href="https://github.com/amdjs/amdjs-api/wiki/AMD">AMD</a>/<a href="http://requirejs.org/">RequireJS</a>
+</h4>
+
+<p>Download the <a href="https://github.com/gerich-home/it-depends/releases">latest release</a></p>
+
+<p>Place where it is suitable according to your AMD/RequireJS configuration</p>
+
+<p>Use it as a dependency of AMD module:</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">define</span>([<span class="pl-s"><span class="pl-pds">'</span>it-depends<span class="pl-pds">'</span></span>], <span class="pl-k">function</span>(<span class="pl-smi">itDepends</span>) {
+    <span class="pl-c">// your code goes here:</span>
+    <span class="pl-k">var</span> firstName <span class="pl-k">=</span> <span class="pl-smi">itDepends</span>.<span class="pl-c1">value</span>(<span class="pl-s"><span class="pl-pds">'</span>James<span class="pl-pds">'</span></span>);
+    <span class="pl-k">...</span>
+});</pre></div>
+
+<h4>
+<a id="browser-globals" class="anchor" href="#browser-globals" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Browser globals</h4>
+
+<p>Download the <a href="https://github.com/gerich-home/it-depends/releases">latest release</a></p>
+
+<p>Place where it is suitable</p>
+
+<p>Include it into the page:</p>
+
+<div class="highlight highlight-text-html-basic"><pre>&lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>js/ext/it-depends.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+&lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>js/your-application.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;</pre></div>
+
+<p>You will be able to use <code>itDepends</code> global variable in your-application.js:</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-c">// your code goes here:</span>
+<span class="pl-k">var</span> firstName <span class="pl-k">=</span> <span class="pl-smi">itDepends</span>.<span class="pl-c1">value</span>(<span class="pl-s"><span class="pl-pds">'</span>James<span class="pl-pds">'</span></span>);
+<span class="pl-k">...</span></pre></div>
+
+<h2>
+<a id="api" class="anchor" href="#api" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>API</h2>
+
+<h3>
+<a id="itdependsvalueinitialvalue" class="anchor" href="#itdependsvalueinitialvalue" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>itDepends.value(initialValue)</code>
+</h3>
+
+<p>Creates observable value object.</p>
+
+<h4>
+<a id="parameters" class="anchor" href="#parameters" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parameters:</h4>
+
+<ul>
+<li>
+<code>initialValue</code> <em>(optional, any value, undefined by default)</em> - the value to be stored in the observable when created.</li>
+</ul>
+
+<h4>
+<a id="returns" class="anchor" href="#returns" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p>the <code>observable</code> value object.</p>
+
+<h3>
+<a id="observablevalue" class="anchor" href="#observablevalue" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>observableValue()</code>
+</h3>
+
+<p>Reads the current value of observable value object.</p>
+
+<h4>
+<a id="returns-1" class="anchor" href="#returns-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p>the current value of observable value object.</p>
+
+<h3>
+<a id="observablevaluewritenewvalue" class="anchor" href="#observablevaluewritenewvalue" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>observableValue.write(newValue)</code>
+</h3>
+
+<p>Updates the current value of observable value object.</p>
+
+<h4>
+<a id="parameters-1" class="anchor" href="#parameters-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parameters:</h4>
+
+<ul>
+<li>
+<code>newValue</code> <em>(mandatory, any value)</em> - the new value to write to observable value object.</li>
+</ul>
+
+<h4>
+<a id="returns-2" class="anchor" href="#returns-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p><em>void</em></p>
+
+<h3>
+<a id="itdependscomputedcalculator" class="anchor" href="#itdependscomputedcalculator" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>itDepends.computed(calculator)</code>
+</h3>
+
+<p>Creates computed value object.</p>
+
+<h4>
+<a id="parameters-2" class="anchor" href="#parameters-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parameters:</h4>
+
+<ul>
+<li>
+<code>calculator</code> <em>(mandatory, function (...parameters: any[]) -&gt; any)</em> - the function that will be called later to (re)calculate the value of computed. Gets called when you request the value for the first time, or when you request the value when some of dependencies (values/computeds) was changed. Should return(calculate) the current value of the computed value object. <strong>Must not</strong> have side-effects. Calculator function can take parameters. In this case the resulting computed behaves as a set of elementary computeds bound to each distinct set of arguments.</li>
+</ul>
+
+<h4>
+<a id="returns-3" class="anchor" href="#returns-3" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p>the <code>computed</code> value object.</p>
+
+<h3>
+<a id="computedvalueparameters" class="anchor" href="#computedvalueparameters" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>computedValue(...parameters)</code>
+</h3>
+
+<p>Reads the current value of computed value object for the given set of parameters. <code>calculator</code> will be called if it is the first call or if a change was made to some of the dependencies (values/computeds) called from calculator previous time. Otherwise the cached current value will be returned.
+During the call dependencies (values/computeds) used in the calculator will be recorded and stored in the list of dependencies.</p>
+
+<h4>
+<a id="parameters-3" class="anchor" href="#parameters-3" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parameters:</h4>
+
+<ul>
+<li>
+<code>parameters</code> <em>(varadic, any[])</em> - parameters that will be passed to the <code>calculator</code>. Calculator will be called only once for each unique set of parameters unless dependencies are changed. </li>
+</ul>
+
+<h4>
+<a id="returns-4" class="anchor" href="#returns-4" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p>the current value of computed value object for the given parameters.</p>
+
+<h3>
+<a id="itdependspromisevaluepromise-initialvalue" class="anchor" href="#itdependspromisevaluepromise-initialvalue" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>itDepends.promiseValue(promise, initialValue)</code>
+</h3>
+
+<p>Creates promise value wrapper object.</p>
+
+<h4>
+<a id="parameters-4" class="anchor" href="#parameters-4" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parameters:</h4>
+
+<ul>
+<li>
+<code>promise</code> <em>(mandatory, <a href="https://promisesaplus.com/#point-21">Promise</a>)</em> - the promise object that is the source of the value.</li>
+<li>
+<code>initialValue</code> <em>(optional, any, undefined by default)</em> - the value to be stored in the promise value when created.</li>
+</ul>
+
+<h4>
+<a id="returns-5" class="anchor" href="#returns-5" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p>the <code>promise</code> value object filled with the <code>initialValue</code> or <code>undefined</code> if none specified.
+Depending on the concrete Promise implementation can be filled with the value of a Promise if it was resolved already.</p>
+
+<h3>
+<a id="promisevalue" class="anchor" href="#promisevalue" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>promiseValue()</code>
+</h3>
+
+<p>Reads the current value of promise value wrapper object.</p>
+
+<h4>
+<a id="returns-6" class="anchor" href="#returns-6" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p>the current value of promise value wrapper object: <code>initialValue</code> of an object or the value that was used to resolve the Promise.</p>
+
+<h3>
+<a id="itdependsonchangecallback" class="anchor" href="#itdependsonchangecallback" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>itDepends.onChange(callback)</code>
+</h3>
+
+<p>Creates the subscription on a change to any observable value.</p>
+
+<h4>
+<a id="parameters-5" class="anchor" href="#parameters-5" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parameters:</h4>
+
+<ul>
+<li>
+<code>callback</code> <em>(mandatory, function (changed: observableValue, from: any, to: any) -&gt; void )</em> - the function that will be called immediately when a change is made to any observable value. The callback receives the changed observableValue, old and new value of observable object.</li>
+</ul>
+
+<h4>
+<a id="returns-7" class="anchor" href="#returns-7" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p>the <code>subscription</code> object that can be used to control the subscription.</p>
+
+<h3>
+<a id="observablevalueonchangecallback" class="anchor" href="#observablevalueonchangecallback" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>observableValue.onChange(callback)</code>
+</h3>
+
+<p>Creates the subscription on a change to this observable value.</p>
+
+<h4>
+<a id="parameters-6" class="anchor" href="#parameters-6" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Parameters:</h4>
+
+<ul>
+<li>
+<code>callback</code> <em>(mandatory, function (changed: observableValue, from: any, to: any) -&gt; void )</em> - the function that will be called immediately when a change is made to this observable value. The callback receives the changed observableValue, old and new value of observable object.</li>
+</ul>
+
+<h4>
+<a id="returns-8" class="anchor" href="#returns-8" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p>the <code>subscription</code> object that can be used to control the subscription.</p>
+
+<h3>
+<a id="subscriptiondisable" class="anchor" href="#subscriptiondisable" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>subscription.disable()</code>
+</h3>
+
+<p>Disables subscription, so change notifications will stop coming any more, unless it is enabled again with <code>enable</code> method.</p>
+
+<h4>
+<a id="returns-9" class="anchor" href="#returns-9" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p><em>void</em></p>
+
+<h3>
+<a id="subscriptionenable" class="anchor" href="#subscriptionenable" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>subscription.enable()</code>
+</h3>
+
+<p>Enables subscription if it was disabled previously, so change notifications will start coming again.</p>
+
+<h4>
+<a id="returns-10" class="anchor" href="#returns-10" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Returns:</h4>
+
+<p><em>void</em></p>
+
+<h2>
+<a id="example-code-try-it-in-tonic" class="anchor" href="#example-code-try-it-in-tonic" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example code (<a href="https://tonicdev.com/gerichhome/it-depends">Try it in Tonic</a>)</h2>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> firstName <span class="pl-k">=</span> <span class="pl-smi">itDepends</span>.<span class="pl-c1">value</span>(<span class="pl-s"><span class="pl-pds">'</span>James<span class="pl-pds">'</span></span>);
+<span class="pl-k">var</span> lastName  <span class="pl-k">=</span> <span class="pl-smi">itDepends</span>.<span class="pl-c1">value</span>(<span class="pl-s"><span class="pl-pds">'</span>Bond<span class="pl-pds">'</span></span>);
+
+<span class="pl-k">var</span> fullName <span class="pl-k">=</span> <span class="pl-smi">itDepends</span>.<span class="pl-en">computed</span>(<span class="pl-k">function</span>(){
+    <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">'</span>Hello, <span class="pl-pds">'</span></span> <span class="pl-k">+</span> <span class="pl-en">firstName</span>() <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span> <span class="pl-pds">'</span></span> <span class="pl-k">+</span> <span class="pl-en">lastName</span>();
+});
+
+<span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-en">fullName</span>()); <span class="pl-c">// Hello, James Bond</span>
+
+<span class="pl-smi">firstName</span>.<span class="pl-c1">write</span>(<span class="pl-s"><span class="pl-pds">'</span>Jack<span class="pl-pds">'</span></span>);
+
+<span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-en">fullName</span>()); <span class="pl-c">// Hello, Jack Bond</span></pre></div>
+
+<h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>I will be glad if you will join the development.</p>
+
+<p>There are lot of things you can help me with. Here are few of them:</p>
+
+<ul>
+<li>Enhance documentation / write samples</li>
+<li>Raise/discuss/prepare PRs for <a href="https://github.com/gerich-home/it-depends/issues">improvements/issues</a>
+</li>
+<li>Add more <a href="https://github.com/gerich-home/it-depends/tree/master/specs">unit tests</a>
+</li>
+<li>Help me with publishing to different repositories, automate it: npm, Bower, NuGet</li>
+<li>Move to TypeScript / write typings</li>
+<li>Make library known to publicity</li>
+</ul>
+
+<h3>
+<a id="contribution-guide" class="anchor" href="#contribution-guide" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contribution Guide</h3>
+
+<p>Development environment prerequisites:</p>
+
+<ol>
+<li>
+<a href="https://nodejs.org/">NodeJS</a>, <a href="https://www.npmjs.com/">npm</a>
+</li>
+<li>
+<a href="http://gulpjs.com/">Gulp</a>. Install with: <code>npm install --global gulp-cli</code>
+</li>
+</ol>
+
+<p>Workflow:</p>
+
+<ol>
+<li>Create a fork</li>
+<li>Clone your git repository</li>
+<li>Run <code>npm install</code>
+</li>
+<li>Run <code>gulp</code>, all tests should be green, build should work</li>
+<li>Make a code change</li>
+<li>Run <code>gulp</code>, all tests should be green, build should work, fix if failed</li>
+<li>Commit, push</li>
+<li>Create PR (pull request)</li>
+</ol>
+
+<h2>
+<a id="author" class="anchor" href="#author" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Author</h2>
+
+<p><a href="mailto:gerich.home@gmail.com">Sergey Gerasimov</a></p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
+
+<p>MSPL (Microsoft Public License)</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">it-depends maintained by <a href="https://github.com/gerich-home">gerich-home</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
